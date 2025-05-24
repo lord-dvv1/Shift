@@ -1,4 +1,4 @@
-// src/main/java/com/example/shift/controller/GroupController.java
+
 package com.example.shift.controller;
 
 import com.example.shift.dto.GroupDto;
@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map; // Для addStudentsToGroup и removeStudentFromGroup
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/groups")
