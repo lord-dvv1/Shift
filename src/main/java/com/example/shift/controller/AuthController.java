@@ -1,4 +1,3 @@
-// src/main/java/com/example/shift/controller/AuthController.java
 package com.example.shift.controller;
 
 import com.example.shift.dto.LoginRequest;
@@ -12,13 +11,16 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -26,8 +28,8 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    private final UserRepository userRepository; // Для получения ID пользователя после успешной аутентификации
-    private final PasswordEncoder passwordEncoder; // Для проверки пароля
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(AuthenticationManager authenticationManager, JwtService jwtService,
                           UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -40,8 +42,9 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {
+            // ИЗМЕНЕНО: Передаем phone вместо username в UsernamePasswordAuthenticationToken
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+                    new UsernamePasswordAuthenticationToken(loginRequest.getPhone(), loginRequest.getPassword())
             );
 
             Users user = (Users) authentication.getPrincipal();
@@ -49,11 +52,17 @@ public class AuthController {
             String accessToken = jwtService.generateJwt(user.getId());
             String refreshToken = jwtService.generateRefreshJwt(user.getId());
 
-            System.out.println(new LoginResponse("Login successful!", accessToken, refreshToken));
-            return ResponseEntity.ok(new LoginResponse("Login successful!", accessToken, refreshToken));
+            List<String> roles = user.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+
+
+            System.out.println(new LoginResponse("Login successful!", accessToken, refreshToken, roles));
+
+            return ResponseEntity.ok(new LoginResponse("Login successful!", accessToken, refreshToken, roles));
 
         } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid phone number or password"); // Изменено сообщение
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during login: " + e.getMessage());
         }

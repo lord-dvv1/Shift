@@ -30,23 +30,36 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<UserDto> getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
+    public Optional<UserDto> getUserByPhone(String phone) {
+        return userRepository.findByPhone(phone)
                 .map(this::convertToDto);
     }
-     @Override
+
+    @Override
     @Transactional
     public UserDto createUser(UserDto userDto) {
+        if (userRepository.findByPhone(userDto.getPhone()).isPresent()) {
+            throw new IllegalArgumentException("User with this phone number already exists: " + userDto.getPhone());
+        }
+
         Users user = new Users();
-        user.setUsername(userDto.getUsername());
+        user.setPhone(userDto.getPhone());
+
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         user.setFullName(userDto.getFullName());
         user.setEmail(userDto.getEmail());
 
-         Role adminRole = roleRepository.findByName("ADMIN") // Ищем роль "ADMIN"
-                .orElseThrow(() -> new RuntimeException("Role 'ADMIN' not found! Please ensure it's created."));
-
-        user.setRoles(List.of(adminRole));
+        if (userDto.getRoles() != null && !userDto.getRoles().isEmpty()) {
+            List<Role> roles = userDto.getRoles().stream()
+                    .map(roleName -> roleRepository.findByName(roleName)
+                            .orElseThrow(() -> new RuntimeException("Role '" + roleName + "' not found!")))
+                    .collect(Collectors.toList());
+            user.setRoles(roles);
+        } else {
+            Role defaultUserRole = roleRepository.findByName("USER")
+                    .orElseThrow(() -> new RuntimeException("Default 'USER' role not found! Please ensure it's created."));
+            user.setRoles(List.of(defaultUserRole));
+        }
 
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
@@ -58,7 +71,7 @@ public class UserServiceImpl implements UserService {
     private UserDto convertToDto(Users user) {
         UserDto dto = new UserDto();
         dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
+        dto.setPhone(user.getPhone());
         dto.setFullName(user.getFullName());
         dto.setEmail(user.getEmail());
         dto.setCreatedAt(user.getCreatedAt());
@@ -71,5 +84,10 @@ public class UserServiceImpl implements UserService {
 
         return dto;
     }
+
+
+
+
+
 
 }

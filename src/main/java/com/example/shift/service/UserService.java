@@ -4,6 +4,6 @@ import com.example.shift.dto.UserDto;
 import java.util.Optional;
 
 public interface UserService {
-    Optional<UserDto> getUserByUsername(String username);
+    Optional<UserDto> getUserByPhone(String phone);
     UserDto createUser(UserDto userDto);
 }

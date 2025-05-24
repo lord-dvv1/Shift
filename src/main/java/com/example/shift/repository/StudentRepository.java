@@ -11,5 +11,5 @@ import java.util.List;
 public interface StudentRepository extends JpaRepository<Student, Long> {
     long countByIsActiveTrue();
     List<Student> findByIsActiveTrueAndIsDeletedFalse();
-    List<Student> findByGroups_Id(Long groupId); // Найти студентов по ID группы
+    List<Student> findByGroups_Id(Long groupId);
 }

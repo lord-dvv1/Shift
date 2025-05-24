@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/rooms")
+@RequestMapping("/api/admin/rooms")
 public class RoomController {
 
     private final RoomRepository roomRepository;

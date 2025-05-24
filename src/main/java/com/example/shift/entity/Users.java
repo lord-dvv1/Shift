@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -22,13 +23,11 @@ public class Users implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(unique = true, nullable = false)
     private String username;
 
-    @Column(nullable = false)
     private String password;
     private String fullName;
-    @Column(unique = true)
+    private String phone;
     private String email;
 
     @Column(name = "created_at")
@@ -37,7 +36,6 @@ public class Users implements UserDetails {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // private boolean isAdmin; // <--- УДАЛИТЬ ЭТУ СТРОКУ
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -45,7 +43,7 @@ public class Users implements UserDetails {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private List<Role> roles = new ArrayList<>();
+    private List<Role> roles;
 
     @PrePersist
     protected void onCreate() {
@@ -60,13 +58,9 @@ public class Users implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        if (roles != null) {
-            for (Role role : roles) {
-                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName().toUpperCase()));
-            }
-        }
-        return authorities;
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .collect(Collectors.toList());
     }
 
     @Override
